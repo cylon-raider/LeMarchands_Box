@@ -16,7 +16,7 @@ block_cipher = None  # Crucial: Must be defined before being used below
 
 # 2. Dependency Paths
 # Ensure this matches the path we sniffed out in MINGW64 earlier
-VP_LIBS = r'C:\Users\marke\PycharmProjects\LamentProject\.venv\Lib\site-packages\vpython\vpython_libraries'
+VP_LIBS = r'<ABSOLUTE_PATH_TO_VENV_SITE_PACKAGES>\vpython\vpython_libraries'
 
 a = Analysis(
     ['lament_config.py'],
@@ -24,11 +24,10 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets/*', 'assets'),
-        # Map the internal libraries to the EXACT nested path the engine wants
-        # This satisfies: ...\_MEIxxxx\vpython\vpython_libraries\glow.min.js
-        (os.path.join(VP_LIBS, '*'), 'vpython/vpython_libraries'),
+        # Map the JS/CSS files to a name that NEVER conflicts with a module
+        (os.path.join(VP_LIBS, '*'), 'vpy_libs'),
     ],
-    hiddenimports=['pkg_resources', 'vpython'],
+    hiddenimports=['pkg_resources'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
