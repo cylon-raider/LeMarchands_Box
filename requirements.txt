@@ -1,0 +1,4 @@
+vpython>=7.6.5
+pygame>=2.6.1
+pyinstaller>=6.10.0
+setuptools<70.0.0
