@@ -144,17 +144,99 @@ class SolidCube:
 # Create the single solid cube
 cube = SolidCube()
 
-def handle_key(evt):
+keys_down = set()
+
+def handle_keydown(evt):
+    keys_down.add(evt.key)
     if evt.key in ['q', 'esc']:
         pygame.mixer.quit()
         sys.exit()
 
-scene.bind('keydown', handle_key)
+def handle_keyup(evt):
+    keys_down.discard(evt.key)
+
+scene.bind('keydown', handle_keydown)
+scene.bind('keyup', handle_keyup)
 print("UI creating now...")
 # --- 8. Execution ---
 # Attach UI elements to the title area in a consistent way
 scene.append_to_title("  ")
 music_toggle = checkbox(bind=toggle_music, text="Background Music", checked=True, pos=scene.title_anchor)
 
+# Add custom wtext for the HTML UI arrow controls and zoom controls
+instructions_html = """
+<script>
+window.addEventListener("keydown", function(e) {
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].indexOf(e.key) > -1) {
+        e.preventDefault();
+    }
+}, false);
+</script>
+<div style="display:flex; flex-direction:column; margin-left: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="font-size: 15px; font-weight: bold; color: #d97706; margin-bottom: 5px; letter-spacing: 0.5px;">PRESS physical keyboard keys to interact:</div>
+  <div style="display:inline-flex; align-items:center; vertical-align:middle; gap:25px; padding-bottom: 5px;">
+    
+    <!-- Rotate Keys -->
+    <div style="display:inline-flex; align-items:center; gap:12px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <kbd style="display:inline-block; width:30px; height:30px; line-height:30px; text-align:center; background:#ffffff; border:1px solid #d1d5db; border-bottom: 3px solid #d1d5db; border-radius:5px; font-weight:bold; color:#374151; font-size:16px; cursor:default; user-select:none;">&#8593;</kbd>
+        <div style="display:flex; gap:4px;">
+          <kbd style="display:inline-block; width:30px; height:30px; line-height:30px; text-align:center; background:#ffffff; border:1px solid #d1d5db; border-bottom: 3px solid #d1d5db; border-radius:5px; font-weight:bold; color:#374151; font-size:16px; cursor:default; user-select:none;">&#8592;</kbd>
+          <kbd style="display:inline-block; width:30px; height:30px; line-height:30px; text-align:center; background:#ffffff; border:1px solid #d1d5db; border-bottom: 3px solid #d1d5db; border-radius:5px; font-weight:bold; color:#374151; font-size:16px; cursor:default; user-select:none;">&#8595;</kbd>
+          <kbd style="display:inline-block; width:30px; height:30px; line-height:30px; text-align:center; background:#ffffff; border:1px solid #d1d5db; border-bottom: 3px solid #d1d5db; border-radius:5px; font-weight:bold; color:#374151; font-size:16px; cursor:default; user-select:none;">&#8594;</kbd>
+        </div>
+      </div>
+      <div style="color: #4b5563; display:flex; flex-direction:column; line-height:1.2; user-select:none;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing:0.3px;">Rotate</span>
+        <span style="font-size:12px; color:#9ca3af;">Hold to spin</span>
+      </div>
+    </div>
+
+    <!-- Zoom Keys -->
+    <div style="display:inline-flex; align-items:center; gap:12px; border-left: 2px solid #e5e7eb; padding-left: 25px;">
+      <div style="display:flex; gap:6px;">
+        <kbd style="display:inline-block; width:34px; height:34px; line-height:34px; text-align:center; background:#ffffff; border:1px solid #d1d5db; border-bottom: 3px solid #d1d5db; border-radius:5px; font-weight:bold; color:#374151; font-size:22px; cursor:default; user-select:none;">+</kbd>
+        <kbd style="display:inline-block; width:34px; height:34px; line-height:34px; text-align:center; background:#ffffff; border:1px solid #d1d5db; border-bottom: 3px solid #d1d5db; border-radius:5px; font-weight:bold; color:#374151; font-size:22px; cursor:default; user-select:none;">-</kbd>
+      </div>
+      <div style="color: #4b5563; display:flex; flex-direction:column; line-height:1.2; user-select:none;">
+        <span style="font-size: 15px; font-weight: 600; letter-spacing:0.3px;">Zoom</span>
+        <span style="font-size:12px; color:#9ca3af;">Hold to scale</span>
+      </div>
+    </div>
+  </div>
+</div>
+"""
+vpython.wtext(text=instructions_html, pos=scene.title_anchor)
+
 while True:
     vpython.rate(60)
+    
+    # Process continuous inputs
+    if keys_down:
+        # --- Handle rotation ---
+        angle_speed = 0.05
+        # Compute camera-relative axes for intuitive rotation
+        cam_fwd = scene.forward.norm()
+        cam_up = scene.up.norm()
+        cam_right = vpython.cross(cam_fwd, cam_up).norm()
+        
+        if 'left' in keys_down or 'ArrowLeft' in keys_down:
+            for p in cube.plates:
+                p.rotate(angle=angle_speed, axis=cam_up, origin=vpython.vector(0,0,0))
+        if 'right' in keys_down or 'ArrowRight' in keys_down:
+            for p in cube.plates:
+                p.rotate(angle=-angle_speed, axis=cam_up, origin=vpython.vector(0,0,0))
+        if 'up' in keys_down or 'ArrowUp' in keys_down:
+            for p in cube.plates:
+                p.rotate(angle=angle_speed, axis=cam_right, origin=vpython.vector(0,0,0))
+        if 'down' in keys_down or 'ArrowDown' in keys_down:
+            for p in cube.plates:
+                p.rotate(angle=-angle_speed, axis=cam_right, origin=vpython.vector(0,0,0))
+
+        # --- Handle zooming ---
+        if '=' in keys_down or '+' in keys_down:
+            # Zoom in (decrease range)
+            scene.range = scene.range * 0.95
+        if '-' in keys_down or '_' in keys_down:
+            # Zoom out (increase range)
+            scene.range = scene.range * 1.05
