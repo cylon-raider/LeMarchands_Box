@@ -88,7 +88,7 @@ def toggle_music(c):
         pygame.mixer.music.pause()
 
 # --- 4. 3D Scene Setup ---
-scene = vpython.canvas(title='The Lament Configuration: Screen-Used Simulator',
+scene = vpython.canvas(title="The Lament Configuration: LeMarchand's Box",
                        width=1200, height=800, background=vpython.color.black,
                        userspin=True, userzoom=True)
 scene.forward = vpython.vector(-0.5, -0.3, -1) # Angle the initial camera so the 3D aspect and distinct sides are obvious
